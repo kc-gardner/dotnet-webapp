@@ -1,0 +1,16 @@
+# Stage 1: Build
+FROM registry.access.redhat.com/ubi8/dotnet-80-runtime AS runtime-base
+FROM registry.access.redhat.com/ubi8/dotnet-80 AS build
+WORKDIR /opt/app-root/src
+COPY WebApp.csproj .
+RUN dotnet restore
+COPY . .
+RUN dotnet publish -c Release -o /opt/app-root/app
+
+# Stage 2: Runtime
+FROM runtime-base
+WORKDIR /opt/app-root/app
+COPY --from=build /opt/app-root/app .
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "WebApp.dll"]
